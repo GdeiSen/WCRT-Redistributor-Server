@@ -4,9 +4,9 @@ import {v4} from "uuid"
 
 /**
  * Rabbit MQ connection manager for creating amq connections
- * @type {RabbitMqConnectionManager}
+ * @type {ServiceConnection}
  */
-export default class RabbitMqConnectionManager {
+export default class ServiceConnection {
     /**
      * Creates a ConnectionManager object with methods for simplified routing of function execution requests and sending them
      *
@@ -14,11 +14,16 @@ export default class RabbitMqConnectionManager {
      * @param {string} config.name the name of the manager for the convenience of displaying information
      * @param {string} config.consumeOn name of the queue for receiving requests by default
      * @param {string} config.dispatchTo name of the queue for sending requests by default
-     * @param {boolean} config.durable the rabbitmq parameter for the queue (There may be errors when synchronizing connection parameters with the rabbitmq server. sometimes it should be enabled)
-     * @param {boolean} config.showLogs parameter to enable logging display in the console when receiving and sending requests
-     * @param {number} config.timeout parameter for setting the time interval for waiting for a response to a request by default
-     * @param {boolean} config.throwErrors parameter that includes throwing out an error if there is one in the response by default
+     * @param {boolean,undefined} config.durable the rabbitmq parameter for the queue (There may be errors when synchronizing connection parameters with the rabbitmq server. sometimes it should be enabled)
+     * @param {boolean,undefined} config.showLogs parameter to enable logging display in the console when receiving and sending requests
+     * @param {number,undefined} config.timeout parameter for setting the time interval for waiting for a response to a request by default
+     * @param {boolean,undefined} config.throwErrors parameter that includes throwing out an error if there is one in the response by default
      */
+
+    /**
+     * config parameters for connection configuration and manager operation
+     */
+    config;
     constructor(config) {
         this.connectionName = config.name;
         this.dispatchTo = config.dispatchTo;
@@ -31,7 +36,7 @@ export default class RabbitMqConnectionManager {
         this.listeners = [];
         this.InputRequestEmitter = new EventEmitter;
         this.InputResponceEmitter = new EventEmitter;
-        if (config.showInfoTable == true) this.#showInfoTable();
+        if (config.showInfoTable === true) this.#showInfoTable();
     }
 
 

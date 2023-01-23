@@ -1,6 +1,7 @@
-import SocketConnectionManager from "./managers/socket-connection-manager.js";
-import RabbitMqConnectionManager from "./managers/rabbit-mq-connection-manager.js";
-import config from "../config.json" assert {type: "json"};
+import ClientConnection from "./managers/client-connection.js";
+import ServiceConnection from "./managers/service-connection.js";
+import * as config from './config/config.json';
+import {CreationError} from "./utils/custom-errors";
 
 /**
  * This module is the main object consisting of connections created using the rabbitmq
@@ -20,17 +21,17 @@ export class GatewayAgent {/*
 (http/socket connection)        (amqp connection)*/
 
     /**Connection object to neural network service class rabbitMQConnectionManager*/
-    NTSConnection;
+    NTSConnection!: ServiceConnection;
 
     /** Connection object to database service using rabbitMQConnectionManager*/
-    DBSConnection;
+    DBSConnection!: ServiceConnection;
 
     /**Connection object to clients using socketIOConnectionManager*/
-    CLSConnection;
+    CLSConnection!: ClientConnection;
 
     /**Prepares connection to neural network service using rabbitMQConnectionManager*/
     createNTSConnection() {
-        this.NTSConnection = new RabbitMqConnectionManager({
+        this.NTSConnection = new ServiceConnection({
             name: "NEURAL-NT-CONNECTION",
             consumeOn: config.FROM_NT_CHANNEL,
             dispatchTo: config.TO_NT_CHANNEL,
@@ -47,12 +48,15 @@ export class GatewayAgent {/*
         │ │ agent ├───────────────┴──────►│ neural network server │
         │ │       │ rabbit mq connection  │                       │
         └─┴───────┴────────────────       └───────────────────────┘ */
+        if (!(this.NTSConnection instanceof ServiceConnection)) {
+            throw new CreationError("NTS Connection is not created!", "NTS Connection need to be created before connecting. Use (createNTSConnection) function first!");
+        }
         this.NTSConnection.connect();
     }
 
     /**Prepares connection to database service using rabbitMQConnectionManager*/
     createDBSConnection() {
-        this.DBSConnection = new RabbitMqConnectionManager({
+        this.DBSConnection = new ServiceConnection({
             name: "DATABASE-CONNECTION",
             consumeOn: config.FROM_DB_CHANNEL,
             dispatchTo: config.TO_DB_CHANNEL,
@@ -69,11 +73,14 @@ export class GatewayAgent {/*
         │ │ agent ├───────────────┴──────►│    database server    │
         │ │       │ rabbit mq connection  │                       │
         └─┴───────┴────────────────       └───────────────────────┘ */
-        this.NTSConnection.connect();
     }
 
     /**Creates connection to client side using socketIOConnectionManager*/
     createCLSConnection() {
-        this.CLSConnection = new SocketConnectionManager(config.CLIENT_URL);
+        this.CLSConnection = new ClientConnection(config.CLIENT_URL);
+    }
+
+    connectCLS(){
+        this.CLSConnection.connect();
     }
 }

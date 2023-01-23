@@ -1,12 +1,11 @@
-import * as express from "express";
+import express from "express";
 import * as http from "http";
 import {Server} from "socket.io";
 import {EventEmitter} from "events";
-import * as cors from "cors";
-import * as cookieParser from "cookie-parser";
-//const errorMiddleware = require('../middlewares/errorMiddleware');
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
-export default class SocketConnectionManager {
+export default class ClientConnection {
     /**
      * Creates a connection object using socket io
      * @param {string} url url to connect
@@ -17,7 +16,6 @@ export default class SocketConnectionManager {
         this.app = express();
         this.app.use(express.json());
         this.app.use(cookieParser());
-        //this.app.use(errorMiddleware);
         this.app.use(cors({
             origin: url,
             credentials: true,
@@ -30,18 +28,17 @@ export default class SocketConnectionManager {
      * Trying to create server using socket io
      */
     async connect() {
-        this.io = new Server(this.server, { cors: '*' });
+        this.io = new Server(this.server, {cors: '*'});
         this.io.on("connection", (socket) => {
             this.socket = socket;
             socket.on('message', (message) => {
                 this.MessageEmitter.emit('message', message, socket);
             })
-            socket.on('disconnect', () => {
-                console.log('🟥 Server Socket Connection Error');
-            })
         });
         this.server.listen(this.url);
-        this.MessageEmitter.on('message', (message) => { console.log(message) })
+        this.MessageEmitter.on('message', (message) => {
+            console.log(message)
+        })
         console.log(`⬜ Ready To Consume Messages From The Client On Port [${this.url}]`)
     }
 
@@ -51,7 +48,7 @@ export default class SocketConnectionManager {
      * @param {string} args data to send
      */
     emitSocket(channel, args) {
-        if(!this.io) return 0;
+        if (!this.io) return 0;
         this.io.emit(channel, args);
     }
 
