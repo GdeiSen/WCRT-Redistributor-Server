@@ -11,6 +11,21 @@ export default class ClientConnection {
      * @param {string} url url to connect
      */
     constructor(url) {
+        /*--------------------------------------------------------------
+        ├─────────────┐
+        │node js      │
+        │http server  │
+        ├───────┐     │
+        │express│     │
+        │app    │     │
+        └───────┴─────┴...
+        ----------------------------------------------------------------
+        at this point, the designer creates an express application
+        and then, using the native node js http module, creates a
+        server where the already created express application is
+        transferred, thereby showing that we will continue to use
+        express "under the hood"
+        ---------------------------------------------------------------*/
         this.url = url;
         this.MessageEmitter = new EventEmitter();
         this.app = express();
@@ -24,21 +39,32 @@ export default class ClientConnection {
         this.server = http.createServer(this.app);
     }
 
-    /**
-     * Trying to create server using socket io
-     */
+    /**Trying to create server using socket io*/
     async connect() {
-        this.io = new Server(this.server, {cors: '*'});
+        /*--------------------------------------------------------------
+        ┌───────────────────┐  ┌──────────────────┐                 ┌───┐
+        │socket io          │  │socket io server  ◄─────────────────┤   │
+        │server             │  │                  │ socket "events" │ c │
+        ├─────────────┐     │  ├────────────┐     ├─────────────────► l │
+        │node js      │     │  │node js     │     │                 │ i │
+        │http server  │     │  │http server │     │                 │ e │
+        ├───────┐     │     │  ├───────┐    │     │                 │ n │
+        │express│     │     │  │express├────┼─────┼──[middleware]───► t │
+        │app    │     │     │  │app    │    │     │express "methods"│ s │
+        │       │     │     │  │       ◄────┼─────┼──[middleware]───┤   │
+        └───────┴─────┴─────┘  └──────────────────┘                 └───┘
+        ----------------------------------------------------------------
+        at this point, we wrap all this packaging in the socket io
+        layer using the function:
+        this.io = new Server( [ node js http server [express app ] ] )
+        ---------------------------------------------------------------*/
+        this.io = new Server(this.server);
         this.io.on("connection", (socket) => {
-            this.socket = socket;
             socket.on('message', (message) => {
                 this.MessageEmitter.emit('message', message, socket);
             })
         });
         this.server.listen(this.url);
-        this.MessageEmitter.on('message', (message) => {
-            console.log(message)
-        })
         console.log(`⬜ Ready To Consume Messages From The Client On Port [${this.url}]`)
     }
 

@@ -1,10 +1,8 @@
 import * as express from "express";
+import usersRoutes from "./users-routes";
+
 const router = express.Router();
 
-
-let usersRoutes = router.get('/ping',(req, res)=>{
-    return res.send('pong!')
-})
-
 router.use('/users', usersRoutes);
+export default router;
 

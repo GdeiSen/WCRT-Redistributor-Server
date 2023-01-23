@@ -2,6 +2,7 @@ import ClientConnection from "./managers/client-connection.js";
 import ServiceConnection from "./managers/service-connection.js";
 import * as config from './config/config.json';
 import {CreationError} from "./utils/custom-errors";
+import router from "./routes";
 
 /**
  * This module is the main object consisting of connections created using the rabbitmq
@@ -78,6 +79,7 @@ export class GatewayAgent {/*
     /**Creates connection to client side using socketIOConnectionManager*/
     createCLSConnection() {
         this.CLSConnection = new ClientConnection(config.CLIENT_URL);
+        this.CLSConnection.app.use(router);
     }
 
     connectCLS(){
